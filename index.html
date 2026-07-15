@@ -3,45 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Embedded YouTube Video</title>
+    <title>Custom Video Player</title>
     <style>
-        /* Optional styles to center and make the video responsive */
         body {
             font-family: Arial, sans-serif;
+            background-color: #222;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            align-items: center;
+            height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
         }
+
         .video-container {
-            width: 90%;
+            position: relative;
+            width: 80%;
             max-width: 800px;
-            aspect-ratio: 16 / 9;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        iframe {
+
+        video {
             width: 100%;
             height: 100%;
+            display: block;
+        }
+
+        /* Controls styling */
+        .controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            gap: 15px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-container:hover .controls {
+            opacity: 1;
+        }
+
+        button {
+            background: none;
             border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        input[type="range"] {
+            cursor: pointer;
+        }
+
+        .progress-bar-container {
+            flex-grow: 1;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-bar-filled {
+            height: 100%;
+            background: #e50914;
+            width: 0%;
+            border-radius: 5px;
+        }
+
+        .time-display {
+            color: white;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
 
-    <h1>My Webpage Video</h1>
-
-    <!-- YouTube Video Embed Container -->
     <div class="video-container">
-        <iframe 
-            src="https://www.youtube.com/watch?v=-m20f2DZE4g" 
-            title="YouTube video player" 
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-            allowfullscreen>
-        </iframe>
+        <!-- Replace with your actual video source -->
+        <video id="video" src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"></video>
+        
+        <div class="controls">
+            <button id="play-btn">▶ Play</button>
+            
+            <div class="progress-bar-container" id="progress-container">
+                <div class="progress-bar-filled" id="progress-filled"></div>
+            </div>
+            
+            <span class="time-display" id="time-display">0:00 / 0:00</span>
+            
+            <button id="mute-btn">🔊 Mute</button>
+            <button id="fullscreen-btn">⛶ Fullscreen</button>
+        </div>
     </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const playBtn = document.getElementById('play-btn');
+        const muteBtn = document.getElementById('mute-btn');
+        const progressContainer = document.getElementById('progress-container');
+        const progressFilled = document.getElementById('progress-filled');
+        const timeDisplay = document.getElementById('time-display');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+
+        // Play and Pause functionality
+        function togglePlay() {
+            if (video.paused) {
+                video.play();
+                playBtn.innerText = '⏸ Pause';
+            } else {
+                video.pause();
+                playBtn.innerText = '▶ Play';
+            }
+        }
+
+        // Mute and Unmute functionality
+        function toggleMute() {
+            video.muted = !video.muted;
+            muteBtn.innerText = video.muted ? '🔇 Unmute' : '🔊 Mute';
+        }
+
+        // Update progress bar
+        function updateProgress() {
+            const percent = (video.currentTime / video.duration) * 100;
+            progressFilled.style.width = `${percent}%`;
+
+            // Format time
+            const currentMinutes = Math.floor(video.currentTime / 60);
+            const currentSeconds = Math.floor(video.currentTime % 60).toString().padStart(2, '0');
+            const totalMinutes = Math.floor(video.duration / 60) || 0;
+            const totalSeconds = Math.floor(video.duration % 60).toString().padStart(2, '0');
+
+            timeDisplay.innerText = `${currentMinutes}:${currentSeconds} / ${totalMinutes}:${totalSeconds}`;
+        }
+
+        // Seek video
+        function scrub(e) {
+            const scrubTime = (e.offsetX / progressContainer.offsetWidth) * video.duration;
+            video.currentTime = scrubTime;
+        }
+
+        // Fullscreen
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                video.parentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Event listeners
+        playBtn.addEventListener('click', togglePlay);
+        video.addEventListener('click', togglePlay);
+        muteBtn.addEventListener('click', toggleMute);
+        video.addEventListener('timeupdate', updateProgress);
+        
+        let mousedown = false;
+        progressContainer.addEventListener('click', scrub);
+        progressContainer.addEventListener('mousemove', (e) => mousedown && scrub(e));
+        progressContainer.addEventListener('mousedown', () => mousedown = true);
+        window.addEventListener('mouseup', () => mousedown = false);
+        
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+    </script>
 
 </body>
 </html>
